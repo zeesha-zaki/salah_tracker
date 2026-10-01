@@ -29,8 +29,10 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+            # The runner already has the Android SDK. We only make sure licenses are accepted
+      # so Gradle can download any extra build tools it needs.
+      - name: Accept Android SDK licenses
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses || true
 
       - name: Install JS dependencies
         run: npm install
