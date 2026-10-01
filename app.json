@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "name": "Salah Tracker",
+    "slug": "salah-tracker",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "android": {
+      "package": "com.salahtracker.app"
+    }
+  }
+}

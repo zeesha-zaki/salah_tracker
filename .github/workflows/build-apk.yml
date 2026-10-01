@@ -1,0 +1,64 @@
+# Builds an installable release APK on every push to `main`.
+# Result: downloadable from the run's "Artifacts" AND from the repo's "Releases".
+name: Build Android APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:          # also lets you run it manually from the Actions tab
+
+permissions:
+  contents: write             # needed to create a GitHub Release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Set up Java 17 (required by Gradle / React Native)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install JS dependencies
+        run: npm install
+
+      # Generates the native /android project from app.json (no Expo account needed).
+      - name: Expo prebuild (generate android folder)
+        run: npx expo prebuild --platform android --no-install --clean
+
+      # Release build is signed with the default debug keystore => installable on any phone.
+      # For Play Store publishing, replace with your own keystore (see README).
+      - name: Build release APK with Gradle
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Rename APK
+        run: cp android/app/build/outputs/apk/release/app-release.apk salah-tracker.apk
+
+      - name: Upload APK as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: salah-tracker-apk
+          path: salah-tracker.apk
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Salah Tracker build ${{ github.run_number }}
+          files: salah-tracker.apk
